@@ -12,6 +12,10 @@ import com.pubnub.api.PubnubException;
 public class ControllerActivity extends AppCompatActivity {
     private Pubnub pubnub;
     private int counter = 0;
+    private static final String CMD_F = "CMD_F";
+    private static final String CMD_B = "CMD_B";
+    private static final String CMD_L = "CMD_L";
+    private static final String CMD_R = "CMD_R";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,18 +25,18 @@ public class ControllerActivity extends AppCompatActivity {
     }
 
     public void forward(View view){
-        pubnub.publish("my_channel", "F", new Callback() {});
+        pubnub.publish("my_channel", CMD_F, new Callback() {});
     }
 
     public void backward(View view){
-        pubnub.publish("my_channel", "B", new Callback() {});
+        pubnub.publish("my_channel", CMD_B, new Callback() {});
     }
     public void left(View view){
-        pubnub.publish("my_channel", "L", new Callback() {});
+        pubnub.publish("my_channel", CMD_L, new Callback() {});
 
     }
     public void right(View view){
-        pubnub.publish("my_channel", "R", new Callback() {});
+        pubnub.publish("my_channel", CMD_R, new Callback() {});
 
     }
 
