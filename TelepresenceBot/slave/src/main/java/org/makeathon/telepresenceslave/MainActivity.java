@@ -193,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
     public void onEvent(ConnectionFailed event) {
         if (mAdapter != null) {
             Toast.makeText(getApplicationContext(),R.string.connection_failed, Toast.LENGTH_SHORT).show();
+            setConnectionState(STATE_CONNECTING);
             findRobot();
         }
     }

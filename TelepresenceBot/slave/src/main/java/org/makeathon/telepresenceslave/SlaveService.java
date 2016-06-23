@@ -49,7 +49,8 @@ public class SlaveService extends Service {
     private static final String CMD_R = "CMD_R";
     private static final String CMD_P = "CMD_P";
 
-    private static final int LOOP = 6;
+    private static final int ONE_MOVE_PERIOD = 1000;
+    private static final int POKE_ONE_WAY_PERIOD = 1500;
 
     private static final int MSG_ROBOT_TYPE_DETECTED = 3;
     private static final int MSG_ROBOT_CONNECTION = 6;
@@ -141,69 +142,79 @@ public class SlaveService extends Service {
     private void onForward() {
         Log.d(TAG, "onForward");
 
-        int loop = LOOP;
-        while (loop != 0) {
-            // move up
-            mRobotCommanderThread.robotMove(speed);
-//            mRobotState =MOVING_FORWARD; // vivi ori
-            loop--;
-        }
+        // move forward
+        mRobotCommanderThread.robotMove(speed);
+        threadWait(ONE_MOVE_PERIOD);
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE; // vivi ori
     }
 
     private void onBackward(){
         Log.d(TAG, "onBackward");
 
-        int loop = LOOP;
-        while (loop != 0) {
-            // move down
-            mRobotCommanderThread.robotMove(-speed);
-//            mRobotState =MOVING_BACK; // vivi ori
-            loop--;
-        }
+        // move backward
+        mRobotCommanderThread.robotMove(-speed);
+        threadWait(ONE_MOVE_PERIOD);
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE; // vivi ori
     }
 
     private void onLeft(){
         Log.d(TAG, "onLeft");
 
-        int loop = LOOP;
-        while (loop != 0) {
-            // move right
-            mRobotCommanderThread.robotRotate(-speed);
-//            mRobotState =MOVING_LEFT;
-            loop--;
-        }
+        // move left
+        mRobotCommanderThread.robotRotate(-speed);
+        threadWait(ONE_MOVE_PERIOD);
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE; // vivi ori
     }
 
     private void onPoke(){
         Log.d(TAG, "onPoke");
+
+        // move motor B & C backwards
+        int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorCPortIndex = 2;
+        mRobotCommanderThread.robotMove(motorBPortIndex, -speed);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -speed);
+
+        threadWait(POKE_ONE_WAY_PERIOD);
+
+        // stop motor B & C
+        mRobotCommanderThread.robotMove(motorBPortIndex,0);
+        mRobotCommanderThread.robotMove(motorCPortIndex,0);
+
+        // move motor B & C forward
+        mRobotCommanderThread.robotMove(motorBPortIndex, speed);
+        mRobotCommanderThread.robotMove(motorCPortIndex, speed);
+
+        threadWait(POKE_ONE_WAY_PERIOD);
+
+        // stop motor B & C
+        mRobotCommanderThread.robotMove(motorBPortIndex,0);
+        mRobotCommanderThread.robotMove(motorCPortIndex,0);
     }
 
     private void onRight(){
         Log.d(TAG, "onRight");
 
-        int loop = LOOP;
-        while (loop != 0) {
-            // move right
-            mRobotCommanderThread.robotRotate(speed);
-//            mRobotState =MOVING_RIGHT;
-            loop--;
-        }
+        // move right
+        mRobotCommanderThread.robotRotate(speed);
+        threadWait(ONE_MOVE_PERIOD);
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE;
+    }
+
+    private void threadWait(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void pubnubConnect() {
