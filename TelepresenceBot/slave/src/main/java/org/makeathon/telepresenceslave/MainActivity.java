@@ -48,6 +48,8 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
+    private static final int LOOP = 5;
+
     private static final int MSG_ROBOT_TYPE_DETECTED = 3;
     private static final int MSG_ROBOT_CONNECTION = 6;
     private static final int STATUS_OK = 0;
@@ -68,9 +70,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
-    private Pubnub pubnub;
-    private int counter = 0;
-    private Dialog connectingProgressDialog;
+    private Pubnub mPubnub;
+    private Dialog mConnectingProgressDialog;
 
     private static final String CMD_F = "CMD_F";
     private static final String CMD_B = "CMD_B";
@@ -78,14 +79,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String CMD_R = "CMD_R";
 
     private BluetoothSocket RobotSocket;
-    private int robotState;
+    private int mRobotState;
     private int speed = 50;
     private BluetoothAdapter mAdapter;
     private RobotConnectorThread mRobotConnectorThread;
     private RobotCommanderThread mRobotCommanderThread;
     private String mRobotAddress;
 
-    private boolean isPortsConfigured;
+    private boolean mIsPortsConfigured;
 
     @Override
     public void onResume(){
@@ -115,12 +116,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        pubnub = new Pubnub("pub-c-e0e0e558-9aa1-412e-a4ca-ce286e939e54", "sub-c-4b5e362c-27fd-11e6-84f2-02ee2ddab7fe");
+        mPubnub = new Pubnub("pub-c-e0e0e558-9aa1-412e-a4ca-ce286e939e54", "sub-c-4b5e362c-27fd-11e6-84f2-02ee2ddab7fe");
 
         connect(null);
 
         mAdapter = BluetoothAdapter.getDefaultAdapter();
-        isPortsConfigured = false;
+        mIsPortsConfigured = false;
 
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey("speed")) {
@@ -128,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (savedInstanceState.containsKey("ports_configured")) {
-                isPortsConfigured = savedInstanceState.containsKey("ports_configured");
+                mIsPortsConfigured = savedInstanceState.containsKey("ports_configured");
             }
         }
     }
@@ -136,63 +137,63 @@ public class MainActivity extends AppCompatActivity {
     private void onForward()
     {
         System.out.println("forward command received");
-        int loop = 3;
+        int loop = LOOP;
         while (loop != 0) {
             // move up
             mRobotCommanderThread.robotMove(speed);
-            robotState=MOVING_FORWARD;
+            mRobotState =MOVING_FORWARD;
             loop--;
         }
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-        robotState=IDLE;
+        mRobotState =IDLE;
     }
     private void onBackward(){
         System.out.println("backward command received");
 
-        int loop = 3;
+        int loop = LOOP;
         while (loop != 0) {
             // move down
             mRobotCommanderThread.robotMove(-speed);
-            robotState=MOVING_BACK;
+            mRobotState =MOVING_BACK;
             loop--;
         }
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-        robotState=IDLE;
+        mRobotState =IDLE;
 
     }
     private void onLeft(){
         System.out.println("left command received");
 
-        int loop = 3;
+        int loop = LOOP;
         while (loop != 0) {
             // move right
             mRobotCommanderThread.robotRotate(-speed);
-            robotState=MOVING_LEFT;
+            mRobotState =MOVING_LEFT;
             loop--;
         }
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-        robotState=IDLE;
+        mRobotState =IDLE;
     }
     private void onRight(){
         System.out.println("right command received");
 
-        int loop = 3;
+        int loop = LOOP;
         while (loop != 0) {
             // move right
             mRobotCommanderThread.robotRotate(speed);
-            robotState=MOVING_RIGHT;
+            mRobotState =MOVING_RIGHT;
             loop--;
         }
 
         // stop moving
         mRobotCommanderThread.robotMove(0);
-        robotState=IDLE;
+        mRobotState =IDLE;
     }
 
     @Override
@@ -237,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case REQUEST_CONFIGURE_DEVICE:
                 if (resultCode == Activity.RESULT_OK) {
-                    isPortsConfigured = true;
+                    mIsPortsConfigured = true;
 //                    setUpUI(); // vivi ori
                 } else if (resultCode== Activity.RESULT_CANCELED) {
 
@@ -265,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         if (getConnectionState()==STATE_CONNECTED) {
             outState.putString("robot_address", mRobotAddress);
-            outState.putBoolean("ports_configured",isPortsConfigured);
+            outState.putBoolean("ports_configured", mIsPortsConfigured);
         }
         outState.putInt("speed", speed);
     }
@@ -278,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy(){
-        pubnub.shutdown();
+        mPubnub.shutdown();
         super.onDestroy();
 
     }
@@ -307,11 +308,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setConnectionState(int state) {
-        robotState = state;
+        mRobotState = state;
     }
 
     private int getConnectionState() {
-        return robotState;
+        return mRobotState;
     }
 
     private final Handler mHandler = new Handler() {
@@ -319,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_ROBOT_CONNECTION:
-                    connectingProgressDialog.dismiss();
+                    mConnectingProgressDialog.dismiss();
 
                     switch (msg.arg1) {
 
@@ -347,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
                     switch (msg.arg1) {
                         case STATUS_OK:
 
-                            if (!isPortsConfigured) {
+                            if (!mIsPortsConfigured) {
 
                                 configureRobotPorts();
                             } else {
@@ -367,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
         }
         mRobotConnectorThread = new RobotConnectorThread(mHandler, mRobotAddress);
         mRobotConnectorThread.start();
-        connectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
+        mConnectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
     }
 
     /**
@@ -440,10 +441,10 @@ public class MainActivity extends AppCompatActivity {
             int portIndex = Integer.parseInt(tag);
             if (event.getAction()== MotionEvent.ACTION_DOWN) {
                 mRobotCommanderThread.robotMove(portIndex, speed);
-                robotState=portIndex;
+                mRobotState =portIndex;
             } else if (event.getAction()== MotionEvent.ACTION_UP) {
                 mRobotCommanderThread.robotMove(portIndex,0);
-                robotState=IDLE;                }
+                mRobotState =IDLE;                }
             return false;
         }
     };
@@ -456,10 +457,10 @@ public class MainActivity extends AppCompatActivity {
             int portIndex = Integer.parseInt(tag);
             if (event.getAction()== MotionEvent.ACTION_DOWN) {
                 mRobotCommanderThread.robotMove(portIndex, -speed);
-                robotState=portIndex;
+                mRobotState =portIndex;
             } else if (event.getAction()== MotionEvent.ACTION_UP) {
                 mRobotCommanderThread.robotMove(portIndex,0);
-                robotState=IDLE;                }
+                mRobotState =IDLE;                }
             return false;
         }
     };
@@ -484,11 +485,11 @@ public class MainActivity extends AppCompatActivity {
 //            public boolean onTouch(View view, MotionEvent event) {
 //                if (event.getAction()== MotionEvent.ACTION_DOWN) {
 //                    mRobotCommanderThread.robotMove(speed);
-//                    robotState=MOVING_FORWARD;
+//                    mRobotState=MOVING_FORWARD;
 //
 //                } else if (event.getAction()== MotionEvent.ACTION_UP) {
 //                    mRobotCommanderThread.robotMove(0);
-//                    robotState=IDLE;
+//                    mRobotState=IDLE;
 //                }
 //                return false;
 //            }
@@ -501,10 +502,10 @@ public class MainActivity extends AppCompatActivity {
 //            public boolean onTouch(View view, MotionEvent event) {
 //                if (event.getAction()== MotionEvent.ACTION_DOWN) {
 //                    mRobotCommanderThread.robotMove(-speed);
-//                    robotState=MOVING_BACK;
+//                    mRobotState=MOVING_BACK;
 //                } else if (event.getAction()== MotionEvent.ACTION_UP) {
 //                    mRobotCommanderThread.robotMove(0);
-//                    robotState=IDLE;                }
+//                    mRobotState=IDLE;                }
 //                return false;
 //            }
 //        });
@@ -516,10 +517,10 @@ public class MainActivity extends AppCompatActivity {
 //            public boolean onTouch(View view, MotionEvent event) {
 //                if (event.getAction()== MotionEvent.ACTION_DOWN) {
 //                    mRobotCommanderThread.robotRotate(-speed);
-//                    robotState=MOVING_LEFT;
+//                    mRobotState=MOVING_LEFT;
 //                } else if (event.getAction()== MotionEvent.ACTION_UP) {
 //                    mRobotCommanderThread.robotMove(0);
-//                    robotState=IDLE;                }
+//                    mRobotState=IDLE;                }
 //                return false;
 //            }
 //        });
@@ -531,10 +532,10 @@ public class MainActivity extends AppCompatActivity {
 //            public boolean onTouch(View view, MotionEvent event) {
 //                if (event.getAction()== MotionEvent.ACTION_DOWN) {
 //                    mRobotCommanderThread.robotRotate(speed);
-//                    robotState=MOVING_RIGHT;
+//                    mRobotState=MOVING_RIGHT;
 //                } else if (event.getAction()== MotionEvent.ACTION_UP) {
 //                    mRobotCommanderThread.robotMove(0);
-//                    robotState=IDLE;                }
+//                    mRobotState=IDLE;                }
 //                return false;
 //            }
 //        });
@@ -577,10 +578,10 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View view, MotionEvent event) {
                 if (event.getAction()==MotionEvent.ACTION_DOWN) {
                     mRobotCommanderThread.robotMoveArm(speed);
-                    robotState=MOVING_ARM;
+                    mRobotState=MOVING_ARM;
                 } else if (event.getAction()==MotionEvent.ACTION_UP) {
                     mRobotCommanderThread.robotMoveArm(0);
-                    robotState=IDLE;                }
+                    mRobotState=IDLE;                }
                 return false;
             }
         });
@@ -600,7 +601,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
- /*               switch (robotState) {
+ /*               switch (mRobotState) {
                     case MOVING_FORWARD:
                         mRobotCommanderThread.robotMove(speed);
                         break;
@@ -643,10 +644,10 @@ public class MainActivity extends AppCompatActivity {
     public void connect(View view){
 
         try {
-            pubnub.subscribe("my_channel", new Callback() {
+            mPubnub.subscribe("my_channel", new Callback() {
                         @Override
                         public void connectCallback(String channel, Object message) {
-                            pubnub.publish("my_channel", "bot connected", new Callback() {});
+                            mPubnub.publish("my_channel", "bot connected", new Callback() {});
 
                         }
 
@@ -696,7 +697,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void disconnect(View view){
-        pubnub.unsubscribe("my_channel", new Callback() {
+        mPubnub.unsubscribe("my_channel", new Callback() {
             @Override
             public void connectCallback(String channel, Object message) {
                 System.out.println("UNSUBSCRIBE : DISCONNECT on channel:" + channel
