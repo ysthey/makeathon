@@ -25,7 +25,7 @@ import android.widget.SeekBar;
 import android.widget.Toast;
 
 import org.makeathon.telepresenceslave.R;
-import org.makeathon.telepresenceslave.roboliterate.SpeedSlider;
+import org.makeathon.telepresenceslave.roboliterate.views.SpeedSlider;
 import org.makeathon.telepresenceslave.roboliterate.robotcomms.BluetoothCommunicator;
 import org.makeathon.telepresenceslave.roboliterate.robotcomms.Commander;
 import org.makeathon.telepresenceslave.roboliterate.robotcomms.CommanderImpl;

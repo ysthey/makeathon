@@ -1,4 +1,4 @@
-package org.makeathon.telepresenceslave.roboliterate;
+package org.makeathon.telepresenceslave.roboliterate.views;
 
 /**
  * Created by geoff on 15/02/2014.

@@ -268,7 +268,7 @@
         </LinearLayout>
 
 
-        <org.makeathon.telepresenceslave.roboliterate.SpeedSlider
+        <org.makeathon.telepresenceslave.roboliterate.views.SpeedSlider
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="fill_parent"
