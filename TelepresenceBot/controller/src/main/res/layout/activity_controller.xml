@@ -8,9 +8,45 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="org.makeathon.telepresencebot.ControllerActivity">
-
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_alignParentBottom="true">
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:onClick="connect"
+            android:text="CONN"/>
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:onClick="disconnect"
+
+            android:text="DISCONN"/>
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:onClick="forward"
+
+            android:text="FORWARD"/>
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:onClick="backward"
+
+            android:text="BACKWARD"/>
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:onClick="left"
+
+            android:text="Left"/>
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:onClick="right"
+
+            android:text="Right"/>
+    </LinearLayout>
+
 </RelativeLayout>
