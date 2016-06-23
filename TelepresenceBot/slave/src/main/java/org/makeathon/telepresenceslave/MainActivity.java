@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String CMD_B = "CMD_B";
     private static final String CMD_L = "CMD_L";
     private static final String CMD_R = "CMD_R";
+    private static final String CMD_P = "CMD_P";
 
     private BluetoothSocket RobotSocket;
     private int mRobotState;
@@ -180,6 +181,11 @@ public class MainActivity extends AppCompatActivity {
         mRobotCommanderThread.robotMove(0);
         mRobotState =IDLE;
     }
+
+    private void onPoke(){
+
+    }
+
     private void onRight(){
         System.out.println("right command received");
 
@@ -680,6 +686,8 @@ public class MainActivity extends AppCompatActivity {
                             }
                             else if (CMD_R.equals(msg)){
                                 onRight();
+                            } else if (CMD_P.equals(msg)){
+                                onPoke();
                             }
                         }
 
