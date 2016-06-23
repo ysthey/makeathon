@@ -27,6 +27,8 @@ public class ControllerActivity extends AppCompatActivity {
     private static final String CMD_B = "CMD_B";
     private static final String CMD_L = "CMD_L";
     private static final String CMD_R = "CMD_R";
+    private static final String CMD_P = "CMD_P";
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -94,6 +96,14 @@ public class ControllerActivity extends AppCompatActivity {
         });
 
     }
+
+
+    public void poke(View view) {
+        pubnub.publish("my_channel", CMD_P, new Callback() {
+        });
+
+    }
+
 
     public void connect(View view) {
 

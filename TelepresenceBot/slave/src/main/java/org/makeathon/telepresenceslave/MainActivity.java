@@ -48,7 +48,7 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
-    private static final int LOOP = 5;
+    private static final int LOOP = 10;
 
     private static final int MSG_ROBOT_TYPE_DETECTED = 3;
     private static final int MSG_ROBOT_CONNECTION = 6;

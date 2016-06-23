@@ -10,7 +10,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".ControllerActivity"
-            android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.Translucent">
 
             android:theme="@style/Theme.AppCompat.Translucent">
