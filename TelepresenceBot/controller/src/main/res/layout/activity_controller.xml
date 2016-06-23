@@ -19,26 +19,26 @@
 
 
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="left"
 
-            android:text="Left"/>
+            android:text="&lt;"/>
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="forward"
 
-            android:text="FORWARD"/>
+            android:text="^"/>
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="right"
 
-            android:text="Right"/>
+            android:text="&gt;"/>
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="poke"
 
             android:text="Poke"/>
@@ -50,22 +50,22 @@
         android:layout_above="@id/bottom_control">
 
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="connect"
-            android:text="CONN"/>
+            android:text="CN"/>
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="disconnect"
 
-            android:text="DISCONN"/>
+            android:text="DC"/>
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/buttonsize"
+            android:layout_height="@dimen/buttonsize"
             android:onClick="backward"
 
-            android:text="BACKWARD"/>
+            android:text="V"/>
 
     </LinearLayout>
 
