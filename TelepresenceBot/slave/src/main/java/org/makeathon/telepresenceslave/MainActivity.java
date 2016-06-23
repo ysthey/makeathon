@@ -26,11 +26,6 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.pubnub.api.Callback;
-import com.pubnub.api.Pubnub;
-import com.pubnub.api.PubnubError;
-import com.pubnub.api.PubnubException;
-
 import org.makeathon.telepresenceslave.roboliterate.activities.ChooseDeviceActivity;
 import org.makeathon.telepresenceslave.roboliterate.activities.ConfigureDeviceActivity;
 import org.makeathon.telepresenceslave.roboliterate.robotcomms.BluetoothCommunicator;
@@ -70,14 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
-    private Pubnub mPubnub;
     private Dialog mConnectingProgressDialog;
-
-    private static final String CMD_F = "CMD_F";
-    private static final String CMD_B = "CMD_B";
-    private static final String CMD_L = "CMD_L";
-    private static final String CMD_R = "CMD_R";
-    private static final String CMD_P = "CMD_P";
 
     private BluetoothSocket RobotSocket;
     private int mRobotState;
@@ -117,9 +105,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPubnub = new Pubnub("pub-c-e0e0e558-9aa1-412e-a4ca-ce286e939e54", "sub-c-4b5e362c-27fd-11e6-84f2-02ee2ddab7fe");
-
-        connect(null);
+        startService(new Intent(this, SlaveService.class)); // vivi test
+//        startActivity(new Intent(this, RemoteControlActivity.class)); // vivi test
 
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mIsPortsConfigured = false;
@@ -133,73 +120,6 @@ public class MainActivity extends AppCompatActivity {
                 mIsPortsConfigured = savedInstanceState.containsKey("ports_configured");
             }
         }
-    }
-
-    private void onForward()
-    {
-        System.out.println("forward command received");
-        int loop = LOOP;
-        while (loop != 0) {
-            // move up
-            mRobotCommanderThread.robotMove(speed);
-            mRobotState =MOVING_FORWARD;
-            loop--;
-        }
-
-        // stop moving
-        mRobotCommanderThread.robotMove(0);
-        mRobotState =IDLE;
-    }
-    private void onBackward(){
-        System.out.println("backward command received");
-
-        int loop = LOOP;
-        while (loop != 0) {
-            // move down
-            mRobotCommanderThread.robotMove(-speed);
-            mRobotState =MOVING_BACK;
-            loop--;
-        }
-
-        // stop moving
-        mRobotCommanderThread.robotMove(0);
-        mRobotState =IDLE;
-
-    }
-    private void onLeft(){
-        System.out.println("left command received");
-
-        int loop = LOOP;
-        while (loop != 0) {
-            // move right
-            mRobotCommanderThread.robotRotate(-speed);
-            mRobotState =MOVING_LEFT;
-            loop--;
-        }
-
-        // stop moving
-        mRobotCommanderThread.robotMove(0);
-        mRobotState =IDLE;
-    }
-
-    private void onPoke(){
-
-    }
-
-    private void onRight(){
-        System.out.println("right command received");
-
-        int loop = LOOP;
-        while (loop != 0) {
-            // move right
-            mRobotCommanderThread.robotRotate(speed);
-            mRobotState =MOVING_RIGHT;
-            loop--;
-        }
-
-        // stop moving
-        mRobotCommanderThread.robotMove(0);
-        mRobotState =IDLE;
     }
 
     @Override
@@ -281,13 +201,6 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         closeConnections();
         super.onBackPressed();
-    }
-
-    @Override
-    public void onDestroy(){
-        mPubnub.shutdown();
-        super.onDestroy();
-
     }
 
     private void closeConnections() {
@@ -645,100 +558,6 @@ public class MainActivity extends AppCompatActivity {
         beepG.setOnClickListener(noteClickedListener);
         Button beepA2 = (Button)findViewById(R.id.button_A2);
         beepA2.setOnClickListener(noteClickedListener);
-    }
-
-    public void connect(View view){
-
-        try {
-            mPubnub.subscribe("my_channel", new Callback() {
-                        @Override
-                        public void connectCallback(String channel, Object message) {
-                            mPubnub.publish("my_channel", "bot connected", new Callback() {});
-
-                        }
-
-                        @Override
-                        public void disconnectCallback(String channel, Object message) {
-                            System.out.println("SUBSCRIBE : DISCONNECT on channel:" + channel
-                                    + " : " + message.getClass() + " : "
-                                    + message.toString());
-                        }
-
-                        public void reconnectCallback(String channel, Object message) {
-                            System.out.println("SUBSCRIBE : RECONNECT on channel:" + channel
-                                    + " : " + message.getClass() + " : "
-                                    + message.toString());
-                        }
-
-                        @Override
-                        public void successCallback(String channel, Object message) {
-                            String msg = message.toString();
-                            System.out.println("SUBSCRIBE : " + channel + " : "
-                                    + message.getClass() + " : " + msg);
-
-                            if(CMD_F.equals(msg)){
-                                onForward();
-                            } else if (CMD_B.equals(msg)){
-                                onBackward();
-                            }
-                            else if (CMD_L.equals(msg)){
-                                onLeft();
-                            }
-                            else if (CMD_R.equals(msg)){
-                                onRight();
-                            } else if (CMD_P.equals(msg)){
-                                onPoke();
-                            }
-                        }
-
-                        @Override
-                        public void errorCallback(String channel, PubnubError error) {
-                            System.out.println("SUBSCRIBE : ERROR on channel " + channel
-                                    + " : " + error.toString());
-                        }
-                    }
-            );
-        } catch (PubnubException e) {
-            System.out.println(e.toString());
-        }
-
-    }
-
-    public void disconnect(View view){
-        mPubnub.unsubscribe("my_channel", new Callback() {
-            @Override
-            public void connectCallback(String channel, Object message) {
-                System.out.println("UNSUBSCRIBE : DISCONNECT on channel:" + channel
-                        + " : " + message.getClass() + " : "
-                        + message.toString());
-            }
-
-            @Override
-            public void disconnectCallback(String channel, Object message) {
-                System.out.println("UNSUBSCRIBE : DISCONNECT on channel:" + channel
-                        + " : " + message.getClass() + " : "
-                        + message.toString());
-            }
-
-            public void reconnectCallback(String channel, Object message) {
-                System.out.println("UNSUBSCRIBE : RECONNECT on channel:" + channel
-                        + " : " + message.getClass() + " : "
-                        + message.toString());
-            }
-
-            @Override
-            public void successCallback(String channel, Object message) {
-                System.out.println("UNSUBSCRIBE : " + channel + " : "
-                        + message.getClass() + " : " + message.toString());
-            }
-
-            @Override
-            public void errorCallback(String channel, PubnubError error) {
-                System.out.println("UNSUBSCRIBE : ERROR on channel " + channel
-                        + " : " + error.toString());
-            }
-        });
-
     }
 
     private synchronized void startRobotCommander() {

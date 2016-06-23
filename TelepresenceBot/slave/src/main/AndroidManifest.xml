@@ -51,6 +51,10 @@
                   android:launchMode="singleTop"
                   android:theme="@android:style/Theme.Dialog">
         </activity>
+
+        <service
+            android:name=".SlaveService"
+            android:exported="false" />
     </application>
 
 </manifest>
