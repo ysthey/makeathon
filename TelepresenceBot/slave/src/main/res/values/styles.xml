@@ -16,4 +16,22 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@android:style/Animation</item>
     </style>
+
+    <style name="button1">
+        <item name="android:background">@drawable/color1button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+    </style>
+
+    <style name="button2">
+        <item name="android:background">@drawable/color2button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+    </style>
+
+    <style name="button5">
+        <item name="android:background">@drawable/color5button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+    </style>
 </resources>
