@@ -115,9 +115,6 @@ public class RemoteControlActivity extends ActionBarActivity {
         }
 
         if (savedInstanceState != null) {
-
-
-
             if (savedInstanceState.containsKey("speed")) {
                 speed = savedInstanceState.getInt("speed");
             }
@@ -125,11 +122,7 @@ public class RemoteControlActivity extends ActionBarActivity {
             if (savedInstanceState.containsKey("ports_configured")) {
                 isPortsConfigured = savedInstanceState.containsKey("ports_configured");
             }
-
         }
-
-
-
     }
 
     @Override
@@ -329,16 +322,9 @@ public class RemoteControlActivity extends ActionBarActivity {
                 });
                 AlertDialog dialog = builder.create();
                 dialog.show();
-
-
-
             }
-
-
         }
-
     }
-
 
 
     private void setUpUI() {
@@ -507,9 +493,6 @@ public class RemoteControlActivity extends ActionBarActivity {
         beepG.setOnClickListener(noteClickedListener);
         Button beepA2 = (Button)findViewById(R.id.button_A2);
         beepA2.setOnClickListener(noteClickedListener);
-
-
-
     }
 
 
@@ -545,15 +528,11 @@ public class RemoteControlActivity extends ActionBarActivity {
         }
     };
 
-
-
     private View.OnClickListener noteClickedListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
 
                 mRobotCommanderThread.robotBeep(Integer.parseInt((String)(view.getTag())));
-
-
         }
     };
 
@@ -799,7 +778,6 @@ mAddress = address;
             isTypeDetected = true;
 
         }
-
     }
 
 }
