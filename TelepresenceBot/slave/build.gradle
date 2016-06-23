@@ -25,5 +25,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:+'
     compile 'com.android.support:gridlayout-v7:+'
     compile 'com.pubnub:pubnub-android:3.7.10'
-
+    compile 'org.greenrobot:eventbus:3.0.0'
 }

@@ -1,8 +1,13 @@
 package org.makeathon.telepresenceslave;
 
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -11,26 +16,68 @@ import com.pubnub.api.Pubnub;
 import com.pubnub.api.PubnubError;
 import com.pubnub.api.PubnubException;
 
+import org.greenrobot.eventbus.EventBus;
+import org.makeathon.telepresenceslave.roboliterate.activities.ChooseDeviceActivity;
+import org.makeathon.telepresenceslave.roboliterate.robotcomms.BluetoothCommunicator;
+import org.makeathon.telepresenceslave.roboliterate.robotcomms.Commander;
+import org.makeathon.telepresenceslave.roboliterate.robotcomms.CommanderImpl;
+import org.makeathon.telepresenceslave.roboliterate.robotcomms.Robot;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.util.UUID;
+
+import events.CancelBluetoothDiscovery;
+import events.ConnectionFailed;
+import events.ConnectionSucceeded;
+import events.DismissConnectionDialog;
+import events.RobotTypeDetected;
+
 /**
  * Created by hui-joo.goh on 23/06/16.
  */
 public class SlaveService extends Service {
 
     private static final String TAG = SlaveService.class.getName();
-    private Pubnub mPubnub;
 
+    private static final UUID SERIAL_PORT_SERVICE_CLASS_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final String CMD_F = "CMD_F";
     private static final String CMD_B = "CMD_B";
     private static final String CMD_L = "CMD_L";
     private static final String CMD_R = "CMD_R";
     private static final String CMD_P = "CMD_P";
 
+    private static final int LOOP = 6;
+
+    private static final int MSG_ROBOT_TYPE_DETECTED = 3;
+    private static final int MSG_ROBOT_CONNECTION = 6;
+    private static final int STATUS_OK = 0;
+    private static final int STATUS_ERROR = 16;
+
+    private static final int IDLE = 9;
+    private static final int MOVING_FORWARD =10;
+    private static final int MOVING_BACK =11;
+    private static final int MOVING_LEFT =12;
+    private static final int MOVING_RIGHT =13;
+
+    private static String sRobotAddress;
+    private int speed = 50;
+
+    private BluetoothSocket RobotSocket;
+
+    private Pubnub mPubnub;
+
+    private RobotConnectorThread mRobotConnectorThread;
+    private RobotCommanderThread mRobotCommanderThread;
+
     private Thread mThread;
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
             Log.d(TAG, "mThread run");
-            // do nothing, just await incoming pubnub messages
+            connectToRobot(sRobotAddress);
         }
     };
 
@@ -46,7 +93,14 @@ public class SlaveService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
 
-        startThread();
+        if (intent != null) {
+            Log.d(TAG, "onStartCommand sRobotAddress " + sRobotAddress);
+            sRobotAddress = intent.getStringExtra(ChooseDeviceActivity.EXTRA_DEVICE_ADDRESS);
+            startRobotCommanderThread();
+        } else {
+            stopSelf();
+        }
+
         return Service.START_STICKY;
     }
 
@@ -61,10 +115,11 @@ public class SlaveService extends Service {
         Log.d(TAG, "onDestroy");
 
         pubnubDisconnect();
+        closeConnections();
     }
 
-    private void startThread() {
-        Log.d(TAG, "startThread");
+    private void startRobotCommanderThread() {
+        Log.d(TAG, "startRobotCommanderThread");
 
         // Do not restart thread if already running
         if (mThread == null || !mThread.isAlive()) {
@@ -75,8 +130,8 @@ public class SlaveService extends Service {
         }
     }
 
-    private void interruptThread() {
-        Log.d(TAG, "interruptThread");
+    private void interruptRobotCommanderThread() {
+        Log.d(TAG, "interruptRobotCommanderThread");
 
         if (mThread != null) {
             mThread.interrupt();
@@ -86,50 +141,49 @@ public class SlaveService extends Service {
     private void onForward() {
         Log.d(TAG, "onForward");
 
-//        int loop = LOOP;
-//        while (loop != 0) {
-//            // move up
-//            mRobotCommanderThread.robotMove(speed);
-//            mRobotState =MOVING_FORWARD;
-//            loop--;
-//        }
-//
-//        // stop moving
-//        mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE;
+        int loop = LOOP;
+        while (loop != 0) {
+            // move up
+            mRobotCommanderThread.robotMove(speed);
+//            mRobotState =MOVING_FORWARD; // vivi ori
+            loop--;
+        }
+
+        // stop moving
+        mRobotCommanderThread.robotMove(0);
+//        mRobotState =IDLE; // vivi ori
     }
 
     private void onBackward(){
         Log.d(TAG, "onBackward");
 
-//        int loop = LOOP;
-//        while (loop != 0) {
-//            // move down
-//            mRobotCommanderThread.robotMove(-speed);
-//            mRobotState =MOVING_BACK;
-//            loop--;
-//        }
-//
-//        // stop moving
-//        mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE;
+        int loop = LOOP;
+        while (loop != 0) {
+            // move down
+            mRobotCommanderThread.robotMove(-speed);
+//            mRobotState =MOVING_BACK; // vivi ori
+            loop--;
+        }
 
+        // stop moving
+        mRobotCommanderThread.robotMove(0);
+//        mRobotState =IDLE; // vivi ori
     }
 
     private void onLeft(){
         Log.d(TAG, "onLeft");
 
-//        int loop = LOOP;
-//        while (loop != 0) {
-//            // move right
-//            mRobotCommanderThread.robotRotate(-speed);
+        int loop = LOOP;
+        while (loop != 0) {
+            // move right
+            mRobotCommanderThread.robotRotate(-speed);
 //            mRobotState =MOVING_LEFT;
-//            loop--;
-//        }
-//
-//        // stop moving
-//        mRobotCommanderThread.robotMove(0);
-//        mRobotState =IDLE;
+            loop--;
+        }
+
+        // stop moving
+        mRobotCommanderThread.robotMove(0);
+//        mRobotState =IDLE; // vivi ori
     }
 
     private void onPoke(){
@@ -139,16 +193,16 @@ public class SlaveService extends Service {
     private void onRight(){
         Log.d(TAG, "onRight");
 
-//        int loop = LOOP;
-//        while (loop != 0) {
-//            // move right
-//            mRobotCommanderThread.robotRotate(speed);
+        int loop = LOOP;
+        while (loop != 0) {
+            // move right
+            mRobotCommanderThread.robotRotate(speed);
 //            mRobotState =MOVING_RIGHT;
-//            loop--;
-//        }
-//
-//        // stop moving
-//        mRobotCommanderThread.robotMove(0);
+            loop--;
+        }
+
+        // stop moving
+        mRobotCommanderThread.robotMove(0);
 //        mRobotState =IDLE;
     }
 
@@ -248,5 +302,275 @@ public class SlaveService extends Service {
         });
 
         mPubnub.shutdown();
+    }
+
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_ROBOT_CONNECTION:
+                    EventBus.getDefault().post(new DismissConnectionDialog());
+
+                    switch (msg.arg1) {
+
+                        case STATUS_ERROR:
+
+                            EventBus.getDefault().post(new ConnectionFailed());
+//                            setConnectionState(STATE_CONNECTING); // vivi ori
+//                            findRobot();
+
+                            break;
+                        case STATUS_OK:
+
+                            EventBus.getDefault().post(new ConnectionSucceeded());
+//                            setConnectionState(STATE_CONNECTED); // vivi ori
+
+                            startRobotCommander();
+
+                            break;
+                        default:
+                            break;
+                    }
+
+                    break;
+                case MSG_ROBOT_TYPE_DETECTED:
+                    switch (msg.arg1) {
+                        case STATUS_OK:
+
+                            EventBus.getDefault().post(new RobotTypeDetected());
+//                            if (!mIsPortsConfigured) { // vivi ori
+//
+//                                configureRobotPorts();
+//                            } else {
+//                                setUpUI();
+//                            }
+                            break;
+                    }
+            }
+        }
+    };
+
+    private synchronized void connectToRobot(String robotAddress) {
+        if (mRobotConnectorThread!=null) {
+            mRobotConnectorThread.cancel();
+            mRobotConnectorThread = null;
+        }
+        mRobotConnectorThread = new RobotConnectorThread(mHandler, robotAddress);
+        mRobotConnectorThread.start();
+//        mConnectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
+    }
+
+    private synchronized void startRobotCommander() {
+        if (mRobotCommanderThread !=null) {
+            mRobotCommanderThread.cancel();
+            mRobotCommanderThread = null;
+        }
+        mRobotCommanderThread = new RobotCommanderThread(mHandler);
+        mRobotCommanderThread.start();
+    }
+
+    private void closeConnections() {
+
+        if (mRobotCommanderThread !=null)
+        {
+            mRobotCommanderThread.cancel();
+            mRobotCommanderThread = null;
+        }
+
+        if (mRobotConnectorThread !=null)
+        {
+            mRobotConnectorThread.cancel();
+            mRobotConnectorThread = null;
+        }
+
+        if (RobotSocket!=null) {
+            try {
+                RobotSocket.close();
+            } catch (IOException ioe) {
+                Log.e(TAG,"Cannot close socket");
+            }
+        }
+    }
+
+    private class RobotConnectorThread extends Thread {
+
+        private Handler mHandler;
+        private String mAddress;
+
+        public RobotConnectorThread(Handler handler, String address) {
+            mAddress = address;
+            mHandler = handler;
+        }
+
+        public void run() {
+            setName("ConnectThread");
+            EventBus.getDefault().post(new CancelBluetoothDiscovery());
+            if (RobotSocket!=null) {
+
+                try {
+                    RobotSocket.close();
+
+                } catch (IOException e2) {
+                    Log.e(TAG,"Could not close socket");
+                }
+            }
+
+            try {
+                BluetoothSocket robotBTSocketTemporary;
+                BluetoothDevice robotDevice = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mAddress);
+                if (robotDevice == null) {
+                    mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
+                }
+                robotBTSocketTemporary = robotDevice.createRfcommSocketToServiceRecord(SERIAL_PORT_SERVICE_CLASS_UUID);
+                try {
+                    robotBTSocketTemporary.connect();
+                } catch (IOException e) {
+
+
+                    // try another method for connection, this should work on the HTC desire, credited to Michael Biermann, MindDROID project
+
+                    try {
+                        Method mMethod = robotDevice.getClass().getMethod("createRfcommSocket", new Class[]{int.class});
+                        robotBTSocketTemporary = (BluetoothSocket) mMethod.invoke(robotDevice, Integer.valueOf(1));
+                        robotBTSocketTemporary.connect();
+
+                    } catch (IOException e1) {
+                        mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
+                        return;
+
+                    }
+                }
+                RobotSocket = robotBTSocketTemporary;
+
+                mHandler.obtainMessage(MSG_ROBOT_CONNECTION,STATUS_OK,0).sendToTarget();
+            } catch (Exception e) {
+                mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
+            }
+
+            synchronized (SlaveService.this) {
+                mRobotConnectorThread = null;
+            }
+
+        }
+
+        public void cancel() {
+            try {
+                if (RobotSocket!=null)
+                    RobotSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to close socket " + e.getMessage());
+            }
+        }
+    }
+
+    private class RobotCommanderThread extends Thread implements Commander.CommanderListener {
+        private BluetoothCommunicator mCommunicator;
+        private Handler mHandler;
+        private Commander mRobotCommander;
+
+        private boolean isTypeDetected;
+
+
+        public RobotCommanderThread(Handler handler) {
+
+            mHandler = handler;
+            isTypeDetected = false;
+
+        }
+
+
+        public void robotMove(int speed) {
+            if (mRobotCommander!=null)
+                mRobotCommander.doRobotMove(speed,0,false);
+        }
+
+
+        public void robotMove(int portIndex, int speed) {
+            if (mRobotCommander!=null) {
+
+                mRobotCommander.doRobotMove(portIndex, speed, 0, false);
+            }
+        }
+
+        public void robotRotate(int speed) {
+            if (mRobotCommander!=null)
+                mRobotCommander.doRobotRotate(speed, 0, false);
+        }
+
+/*        public void robotMoveArm(int speed) {
+            if (mRobotCommander!=null)
+                mRobotCommander.doRobotTurnArm(speed,0,false);
+        }*/
+
+        public void robotBeep(int frequency) {
+            if (mRobotCommander!=null)
+                mRobotCommander.doRobotBeep(speed,frequency,600,false);
+        }
+
+        public void run() {
+
+            try {
+                InputStream robotInputStream = RobotSocket.getInputStream();
+                OutputStream robotOutputStream = RobotSocket.getOutputStream();
+                mCommunicator = BluetoothCommunicator.getInstance(robotInputStream, robotOutputStream);
+                mRobotCommander = new CommanderImpl(getApplicationContext(), mCommunicator, this);
+                mRobotCommander.detectRobotType();
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR).sendToTarget();
+            }
+
+        }
+
+        @Override
+        public void onCommunicationFailure(int status) {
+            if (mHandler!=null) {
+                Message message = mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR);
+                message.sendToTarget();
+            }
+        }
+
+        public void cancel() {
+
+            mCommunicator=null;
+            mRobotCommander=null;
+            try {
+                if (RobotSocket!=null)
+                    RobotSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to close socket " + e.getMessage());
+            }
+        }
+
+        @Override
+        public void onPortsConfigured(int status) {
+
+
+        }
+
+        @Override
+        public void onProgramLineExecuted(int status) {}
+
+        @Override
+        public void onProgramComplete(int status) {}
+
+        @Override
+        public void onPortsDetected(int status) {}
+
+        @Override
+        public void updateMotorReading(int status, int value) {}
+
+        @Override
+        public void updateSensorReading(Robot.Sensor sensor, int status, int value) {}
+
+        @Override
+        public void onRobotTypeDetected(int robotType) {
+            if (!isTypeDetected)
+                mHandler.obtainMessage(MSG_ROBOT_TYPE_DETECTED, STATUS_OK).sendToTarget();
+            isTypeDetected = true;
+
+        }
     }
 }

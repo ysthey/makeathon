@@ -8,16 +8,11 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -26,53 +21,35 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.makeathon.telepresenceslave.roboliterate.activities.ChooseDeviceActivity;
 import org.makeathon.telepresenceslave.roboliterate.activities.ConfigureDeviceActivity;
-import org.makeathon.telepresenceslave.roboliterate.robotcomms.BluetoothCommunicator;
-import org.makeathon.telepresenceslave.roboliterate.robotcomms.Commander;
-import org.makeathon.telepresenceslave.roboliterate.robotcomms.CommanderImpl;
 import org.makeathon.telepresenceslave.roboliterate.robotcomms.Robot;
 import org.makeathon.telepresenceslave.roboliterate.views.SpeedSlider;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.util.UUID;
+import events.CancelBluetoothDiscovery;
+import events.ConnectionFailed;
+import events.DismissConnectionDialog;
+import events.ConnectionSucceeded;
+import events.RobotTypeDetected;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
-    private static final int LOOP = 10;
-
-    private static final int MSG_ROBOT_TYPE_DETECTED = 3;
-    private static final int MSG_ROBOT_CONNECTION = 6;
-    private static final int STATUS_OK = 0;
-    private static final int STATUS_ERROR = 16;
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_CONNECT_DEVICE = 2;
     private static final int REQUEST_CONFIGURE_DEVICE = 3;
 
-    private static final int IDLE = 9;
-    private static final int MOVING_FORWARD =10;
-    private static final int MOVING_BACK =11;
-    private static final int MOVING_LEFT =12;
-    private static final int MOVING_RIGHT =13;
-
     private static final String MY_PREFS = "MyPrefs";
-    private static final UUID SERIAL_PORT_SERVICE_CLASS_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
     private Dialog mConnectingProgressDialog;
 
-    private BluetoothSocket RobotSocket;
     private int mRobotState;
-    private int speed = 50;
     private BluetoothAdapter mAdapter;
-    private RobotConnectorThread mRobotConnectorThread;
-    private RobotCommanderThread mRobotCommanderThread;
     private String mRobotAddress;
 
     private boolean mIsPortsConfigured;
@@ -105,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        startService(new Intent(this, SlaveService.class)); // vivi test
+        EventBus.getDefault().register(this);
+
 //        startActivity(new Intent(this, RemoteControlActivity.class)); // vivi test
 
         mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -113,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey("speed")) {
-                speed = savedInstanceState.getInt("speed");
+//                speed = savedInstanceState.getInt("speed");
             }
 
             if (savedInstanceState.containsKey("ports_configured")) {
@@ -126,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         if (getConnectionState()==STATE_CONNECTED) {
-            connectToRobot();
+//            connectToRobot(); // vivi ori
 
         } else {
             findRobot();
@@ -134,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Callback function when returning from other Activities
+     * Callback function whenx returning from other Activities
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -153,7 +131,12 @@ public class MainActivity extends AppCompatActivity {
                     if (extras != null) {
                         mRobotAddress = extras.getString(ChooseDeviceActivity.EXTRA_DEVICE_ADDRESS);
                         setConnectionState(STATE_CONNECTING);
-                        connectToRobot();
+//                        connectToRobot(); // vivi ori
+                        Intent service = new Intent(this, SlaveService.class);
+                        service.putExtra(ChooseDeviceActivity.EXTRA_DEVICE_ADDRESS, mRobotAddress);
+
+                        mConnectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
+                        startService(service); // vivi test
                     }
                 } else if (resultCode== Activity.RESULT_CANCELED) {
 
@@ -184,45 +167,55 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        closeConnections();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (getConnectionState()==STATE_CONNECTED) {
-            outState.putString("robot_address", mRobotAddress);
-            outState.putBoolean("ports_configured", mIsPortsConfigured);
-        }
-        outState.putInt("speed", speed);
+//        closeConnections(); // vivi ori
     }
 
     @Override
     public void onBackPressed() {
-        closeConnections();
+//        closeConnections(); // vivi ori
         super.onBackPressed();
     }
 
-    private void closeConnections() {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
+    }
 
-        if (mRobotCommanderThread !=null)
-        {
-            mRobotCommanderThread.cancel();
-            mRobotCommanderThread = null;
+    @Subscribe
+    public void onEvent(DismissConnectionDialog event) {
+        if (mConnectingProgressDialog != null) {
+            mConnectingProgressDialog.dismiss();
         }
+    }
 
-        if (mRobotConnectorThread !=null)
-        {
-            mRobotConnectorThread.cancel();
-            mRobotConnectorThread = null;
+    @Subscribe
+    public void onEvent(ConnectionFailed event) {
+        if (mAdapter != null) {
+            Toast.makeText(getApplicationContext(),R.string.connection_failed, Toast.LENGTH_SHORT).show();
+            findRobot();
         }
+    }
 
-        if (RobotSocket!=null) {
-            try {
-                RobotSocket.close();
-            } catch (IOException ioe) {
-                Log.e(TAG,"Cannot close socket");
-            }
+    @Subscribe
+    public void onEvent(CancelBluetoothDiscovery event) {
+        if (mAdapter != null) {
+            mAdapter.cancelDiscovery();
+        }
+    }
+
+    @Subscribe
+    public void onEvent(ConnectionSucceeded event) {
+        if (mAdapter != null) {
+            setConnectionState(STATE_CONNECTED);
+        }
+    }
+
+    @Subscribe
+    public void onEvent(RobotTypeDetected event) {
+        if (!mIsPortsConfigured) {
+
+            configureRobotPorts();
         }
     }
 
@@ -232,62 +225,6 @@ public class MainActivity extends AppCompatActivity {
 
     private int getConnectionState() {
         return mRobotState;
-    }
-
-    private final Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_ROBOT_CONNECTION:
-                    mConnectingProgressDialog.dismiss();
-
-                    switch (msg.arg1) {
-
-                        case STATUS_ERROR:
-
-                            Toast.makeText(getApplicationContext(),R.string.connection_failed, Toast.LENGTH_SHORT).show();
-                            setConnectionState(STATE_CONNECTING);
-                            findRobot();
-
-                            break;
-                        case STATUS_OK:
-
-                            setConnectionState(STATE_CONNECTED);
-
-                            startRobotCommander();
-
-
-                            break;
-                        default:
-                            break;
-                    }
-
-                    break;
-                case MSG_ROBOT_TYPE_DETECTED:
-                    switch (msg.arg1) {
-                        case STATUS_OK:
-
-                            if (!mIsPortsConfigured) {
-
-                                configureRobotPorts();
-                            } else {
-//                                setUpUI(); // vivi ori
-                            }
-                            break;
-
-                    }
-            }
-        }
-    };
-
-    private synchronized void connectToRobot() {
-        if (mRobotConnectorThread!=null) {
-            mRobotConnectorThread.cancel();
-            mRobotConnectorThread = null;
-        }
-        mRobotConnectorThread = new RobotConnectorThread(mHandler, mRobotAddress);
-        mRobotConnectorThread.start();
-        mConnectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
     }
 
     /**
@@ -355,15 +292,15 @@ public class MainActivity extends AppCompatActivity {
     private View.OnTouchListener motorForwardListener = new View.OnTouchListener() {
 
         @Override
-        public boolean onTouch(View view, MotionEvent event) {
-            String tag = (String)view.getTag();
-            int portIndex = Integer.parseInt(tag);
-            if (event.getAction()== MotionEvent.ACTION_DOWN) {
-                mRobotCommanderThread.robotMove(portIndex, speed);
-                mRobotState =portIndex;
-            } else if (event.getAction()== MotionEvent.ACTION_UP) {
-                mRobotCommanderThread.robotMove(portIndex,0);
-                mRobotState =IDLE;                }
+        public boolean onTouch(View view, MotionEvent event) { // vivi ori
+//            String tag = (String)view.getTag();
+//            int portIndex = Integer.parseInt(tag);
+//            if (event.getAction()== MotionEvent.ACTION_DOWN) {
+//                mRobotCommanderThread.robotMove(portIndex, speed);
+//                mRobotState =portIndex;
+//            } else if (event.getAction()== MotionEvent.ACTION_UP) {
+//                mRobotCommanderThread.robotMove(portIndex,0);
+//                mRobotState =IDLE;                }
             return false;
         }
     };
@@ -371,15 +308,15 @@ public class MainActivity extends AppCompatActivity {
     private View.OnTouchListener motorBackListener = new View.OnTouchListener() {
 
         @Override
-        public boolean onTouch(View view, MotionEvent event) {
-            String tag = (String)view.getTag();
-            int portIndex = Integer.parseInt(tag);
-            if (event.getAction()== MotionEvent.ACTION_DOWN) {
-                mRobotCommanderThread.robotMove(portIndex, -speed);
-                mRobotState =portIndex;
-            } else if (event.getAction()== MotionEvent.ACTION_UP) {
-                mRobotCommanderThread.robotMove(portIndex,0);
-                mRobotState =IDLE;                }
+        public boolean onTouch(View view, MotionEvent event) { // vivi ori
+//            String tag = (String)view.getTag();
+//            int portIndex = Integer.parseInt(tag);
+//            if (event.getAction()== MotionEvent.ACTION_DOWN) {
+//                mRobotCommanderThread.robotMove(portIndex, -speed);
+//                mRobotState =portIndex;
+//            } else if (event.getAction()== MotionEvent.ACTION_UP) {
+//                mRobotCommanderThread.robotMove(portIndex,0);
+//                mRobotState =IDLE;                }
             return false;
         }
     };
@@ -388,13 +325,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View view) {
 
-            mRobotCommanderThread.robotBeep(Integer.parseInt((String)(view.getTag())));
+//            mRobotCommanderThread.robotBeep(Integer.parseInt((String)(view.getTag()))); // vivi ori
         }
     };
 
     private void setUpUI() { // vivi copied
 
-        speed = 50;
+//        speed = 50;
         int robotType = Robot.getRobotType();
 
 //        Button upButton = (Button)findViewById(R.id.button_forward);
@@ -510,7 +447,7 @@ public class MainActivity extends AppCompatActivity {
         speedSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                speed = i;
+//                speed = i;
             }
 
             @Override
@@ -558,197 +495,5 @@ public class MainActivity extends AppCompatActivity {
         beepG.setOnClickListener(noteClickedListener);
         Button beepA2 = (Button)findViewById(R.id.button_A2);
         beepA2.setOnClickListener(noteClickedListener);
-    }
-
-    private synchronized void startRobotCommander() {
-        if (mRobotCommanderThread !=null) {
-            mRobotCommanderThread.cancel();
-            mRobotCommanderThread = null;
-        }
-        mRobotCommanderThread = new RobotCommanderThread(mHandler);
-        mRobotCommanderThread.start();
-
-    }
-
-    private class RobotConnectorThread extends Thread {
-
-        private Handler mHandler;
-        private String mAddress;
-
-        public RobotConnectorThread(Handler handler, String address) {
-            mAddress = address;
-            mHandler = handler;
-        }
-
-        public void run() {
-            setName("ConnectThread");
-            mAdapter.cancelDiscovery();
-            if (RobotSocket!=null) {
-
-                try {
-                    RobotSocket.close();
-
-                } catch (IOException e2) {
-                    Log.e(TAG,"Could not close socket");
-                }
-            }
-
-            try {
-                BluetoothSocket robotBTSocketTemporary;
-                BluetoothDevice robotDevice = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mAddress);
-                if (robotDevice == null) {
-                    mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
-                }
-                robotBTSocketTemporary = robotDevice.createRfcommSocketToServiceRecord(SERIAL_PORT_SERVICE_CLASS_UUID);
-                try {
-                    robotBTSocketTemporary.connect();
-                } catch (IOException e) {
-
-
-                    // try another method for connection, this should work on the HTC desire, credited to Michael Biermann, MindDROID project
-
-                    try {
-                        Method mMethod = robotDevice.getClass().getMethod("createRfcommSocket", new Class[]{int.class});
-                        robotBTSocketTemporary = (BluetoothSocket) mMethod.invoke(robotDevice, Integer.valueOf(1));
-                        robotBTSocketTemporary.connect();
-
-                    } catch (IOException e1) {
-                        mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
-                        return;
-
-                    }
-                }
-                RobotSocket = robotBTSocketTemporary;
-
-                mHandler.obtainMessage(MSG_ROBOT_CONNECTION,STATUS_OK,0).sendToTarget();
-            } catch (Exception e) {
-                mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
-            }
-
-            synchronized (MainActivity.this) {
-                mRobotConnectorThread = null;
-            }
-
-        }
-
-        public void cancel() {
-            try {
-                if (RobotSocket!=null)
-                    RobotSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to close socket " + e.getMessage());
-            }
-        }
-    }
-
-    private class RobotCommanderThread extends Thread implements Commander.CommanderListener {
-        private BluetoothCommunicator mCommunicator;
-        private Handler mHandler;
-        private Commander mRobotCommander;
-
-        private boolean isTypeDetected;
-
-
-        public RobotCommanderThread(Handler handler) {
-
-            mHandler = handler;
-            isTypeDetected = false;
-
-        }
-
-
-        public void robotMove(int speed) {
-            if (mRobotCommander!=null)
-                mRobotCommander.doRobotMove(speed,0,false);
-        }
-
-
-        public void robotMove(int portIndex, int speed) {
-            if (mRobotCommander!=null) {
-
-                mRobotCommander.doRobotMove(portIndex, speed, 0, false);
-            }
-        }
-
-        public void robotRotate(int speed) {
-            if (mRobotCommander!=null)
-                mRobotCommander.doRobotRotate(speed, 0, false);
-        }
-
-/*        public void robotMoveArm(int speed) {
-            if (mRobotCommander!=null)
-                mRobotCommander.doRobotTurnArm(speed,0,false);
-        }*/
-
-        public void robotBeep(int frequency) {
-            if (mRobotCommander!=null)
-                mRobotCommander.doRobotBeep(speed,frequency,600,false);
-        }
-
-        public void run() {
-
-            try {
-                InputStream robotInputStream = RobotSocket.getInputStream();
-                OutputStream robotOutputStream = RobotSocket.getOutputStream();
-                mCommunicator = BluetoothCommunicator.getInstance(robotInputStream, robotOutputStream);
-                mRobotCommander = new CommanderImpl(getApplicationContext(), mCommunicator, this);
-                mRobotCommander.detectRobotType();
-
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR).sendToTarget();
-            }
-
-        }
-
-        @Override
-        public void onCommunicationFailure(int status) {
-            if (mHandler!=null) {
-                Message message = mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR);
-                message.sendToTarget();
-            }
-        }
-
-        public void cancel() {
-
-            mCommunicator=null;
-            mRobotCommander=null;
-            try {
-                if (RobotSocket!=null)
-                    RobotSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to close socket " + e.getMessage());
-            }
-        }
-
-        @Override
-        public void onPortsConfigured(int status) {
-
-
-        }
-
-        @Override
-        public void onProgramLineExecuted(int status) {}
-
-        @Override
-        public void onProgramComplete(int status) {}
-
-        @Override
-        public void onPortsDetected(int status) {}
-
-        @Override
-        public void updateMotorReading(int status, int value) {}
-
-        @Override
-        public void updateSensorReading(Robot.Sensor sensor, int status, int value) {}
-
-        @Override
-        public void onRobotTypeDetected(int robotType) {
-            if (!isTypeDetected)
-                mHandler.obtainMessage(MSG_ROBOT_TYPE_DETECTED, STATUS_OK).sendToTarget();
-            isTypeDetected = true;
-
-        }
     }
 }
