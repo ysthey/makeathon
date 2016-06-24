@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 //            connectToRobot(); // vivi ori
 
         } else {
-            findRobot();
+            //findRobot();
         }
     }
 
@@ -502,5 +502,19 @@ public class MainActivity extends AppCompatActivity {
         beepG.setOnClickListener(noteClickedListener);
         Button beepA2 = (Button)findViewById(R.id.button_A2);
         beepA2.setOnClickListener(noteClickedListener);
+    }
+
+    public void connectRobot(View v){
+        findRobot();
+    }
+    public void testControl(View v){
+        Intent i = new Intent( this.getApplicationContext(), TestControlActivity.class);
+        this.startActivity(i);
+    }
+    public void disconnectRobot(View v){
+        SlaveService s = SlaveService.getInstance();
+        if(s != null){
+            s.disconnect();
+        }
     }
 }

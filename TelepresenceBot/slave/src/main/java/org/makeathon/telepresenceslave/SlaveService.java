@@ -66,6 +66,8 @@ public class SlaveService extends Service {
     private static String sRobotAddress;
     private final int speed = 50;
     private final int POKE_SPEED = 5;
+    private final int TURNING_SPEED = 100;
+
 
 
     private BluetoothSocket RobotSocket;
@@ -84,10 +86,18 @@ public class SlaveService extends Service {
         }
     };
 
-    @Override
-    public void onCreate() {
-        Log.d(TAG, "onCreate");
+    private static SlaveService sInstance;
 
+
+    public static synchronized  SlaveService getInstance(){
+        return sInstance;
+    }
+
+
+    @Override
+    public synchronized void onCreate() {
+        Log.d(TAG, "onCreate");
+        sInstance = this;
         mPubnub = new Pubnub("pub-c-e0e0e558-9aa1-412e-a4ca-ce286e939e54", "sub-c-4b5e362c-27fd-11e6-84f2-02ee2ddab7fe");
         pubnubConnect();
     }
@@ -116,10 +126,15 @@ public class SlaveService extends Service {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
+        disconnect();
 
+    }
+
+    public void disconnect(){
         pubnubDisconnect();
         closeConnections();
     }
+
 
     private void startRobotCommanderThread() {
         Log.d(TAG, "startRobotCommanderThread");
@@ -141,7 +156,7 @@ public class SlaveService extends Service {
         }
     }
 
-    private void onForward() {
+    public void onForward() {
         Log.d(TAG, "onForward");
 
         // move forward
@@ -152,7 +167,7 @@ public class SlaveService extends Service {
         mRobotCommanderThread.robotMove(0);
     }
 
-    private void onBackward(){
+    public void onBackward(){
         Log.d(TAG, "onBackward");
 
         // move backward
@@ -163,18 +178,27 @@ public class SlaveService extends Service {
         mRobotCommanderThread.robotMove(0);
     }
 
-    private void onLeft(){
+    public void onLeft(){
         Log.d(TAG, "onLeft");
-
+/*
         // move left
-        mRobotCommanderThread.robotRotate(-speed);
+        mRobotCommanderThread.robotRotate(-TURNING_SPEED);
         threadWait(ONE_MOVE_PERIOD);
 
         // stop moving
+        mRobotCommanderThread.robotMove(0);*/
+        int motorAPortIndex = 0; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorDPortIndex = 3;
+        mRobotCommanderThread.robotMove(motorAPortIndex, -TURNING_SPEED);
+        mRobotCommanderThread.robotMove(motorDPortIndex, TURNING_SPEED);
+        threadWait(ONE_MOVE_PERIOD);
         mRobotCommanderThread.robotMove(0);
+
+
+
     }
 
-    private void onPoke(){
+    public void onPoke(){
         Log.d(TAG, "onPoke");
 
         // move motor B & C backwards
@@ -207,14 +231,20 @@ public class SlaveService extends Service {
 
     }
 
-    private void onRight(){
+    public void onRight(){
         Log.d(TAG, "onRight");
-
+/*
         // move right
-        mRobotCommanderThread.robotRotate(speed);
+        mRobotCommanderThread.robotRotate(TURNING_SPEED);
         threadWait(ONE_MOVE_PERIOD);
 
         // stop moving
+        mRobotCommanderThread.robotMove(0);*/
+        int motorAPortIndex = 0; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorDPortIndex = 3;
+        mRobotCommanderThread.robotMove(motorAPortIndex, TURNING_SPEED);
+        mRobotCommanderThread.robotMove(motorDPortIndex, -TURNING_SPEED);
+        threadWait(ONE_MOVE_PERIOD);
         mRobotCommanderThread.robotMove(0);
     }
 

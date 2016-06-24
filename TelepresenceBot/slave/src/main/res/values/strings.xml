@@ -117,4 +117,5 @@
     <string name="D">D</string>
     <string name="C">C</string>
     <string name="infrared_sensor">Infra red</string>
+    <string name="title_activity_test_control">TestControlActivity</string>
 </resources>
