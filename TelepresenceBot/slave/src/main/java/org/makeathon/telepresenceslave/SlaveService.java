@@ -198,6 +198,22 @@ public class SlaveService extends Service {
 
     }
 
+    public void onSlap(){
+        Log.d(TAG, "onPoke");
+
+        // move motor B & C backwards
+        int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorCPortIndex = 2;
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 180,true);
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED, 180,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
+
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 300, true);
+
+
+
+    }
+
     public void onPoke(){
         Log.d(TAG, "onPoke");
 
