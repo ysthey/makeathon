@@ -27,4 +27,6 @@ dependencies {
     compile 'com.pubnub:pubnub-android:3.7.10'
     compile 'org.greenrobot:eventbus:3.0.0'
     compile 'com.android.support:design:23.4.0'
+    compile 'com.google.android.gms:play-services:7.8.+'
+
 }

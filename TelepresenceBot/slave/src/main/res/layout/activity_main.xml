@@ -26,4 +26,10 @@
         android:layout_height="wrap_content"
         android:onClick="testControl"
         android:text="test local controls"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="beHappy"
+        android:text="Be Happy"/>
 </LinearLayout>

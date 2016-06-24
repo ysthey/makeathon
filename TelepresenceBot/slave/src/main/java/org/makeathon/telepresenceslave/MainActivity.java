@@ -21,6 +21,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import com.google.android.gms.samples.vision.face.facetracker.FaceTrackerActivity;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.makeathon.telepresenceslave.roboliterate.activities.ChooseDeviceActivity;
@@ -516,5 +518,9 @@ public class MainActivity extends AppCompatActivity {
         if(s != null){
             s.disconnect();
         }
+    }
+    public void beHappy(View v){
+        Intent i = new Intent( this.getApplicationContext(), FaceTrackerActivity.class);
+        this.startActivity(i);
     }
 }
