@@ -99,7 +99,6 @@ public class SlaveService extends Service {
         Log.d(TAG, "onCreate");
         sInstance = this;
         mPubnub = new Pubnub("pub-c-e0e0e558-9aa1-412e-a4ca-ce286e939e54", "sub-c-4b5e362c-27fd-11e6-84f2-02ee2ddab7fe");
-        pubnubConnect();
     }
 
     @Override
@@ -109,6 +108,7 @@ public class SlaveService extends Service {
         if (intent != null) {
             Log.d(TAG, "onStartCommand sRobotAddress " + sRobotAddress);
             sRobotAddress = intent.getStringExtra(ChooseDeviceActivity.EXTRA_DEVICE_ADDRESS);
+
             startRobotCommanderThread();
         } else {
             stopSelf();
@@ -131,8 +131,10 @@ public class SlaveService extends Service {
     }
 
     public void disconnect(){
-        pubnubDisconnect();
+        //pubnubDisconnect();
         closeConnections();
+        sInstance = null;
+
     }
 
 
@@ -216,7 +218,7 @@ public class SlaveService extends Service {
         //mRobotCommanderThread.robotMove(motorCPortIndex,0);
 
         // move motor B & C forward
-        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED,90,false);
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED+ 20,90,false);
 
         mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 300, true);
 
@@ -493,6 +495,8 @@ public class SlaveService extends Service {
                 RobotSocket = robotBTSocketTemporary;
 
                 mHandler.obtainMessage(MSG_ROBOT_CONNECTION,STATUS_OK,0).sendToTarget();
+                pubnubConnect();
+
             } catch (Exception e) {
                 mHandler.obtainMessage(MSG_ROBOT_CONNECTION, STATUS_ERROR,0).sendToTarget();
             }
@@ -505,6 +509,8 @@ public class SlaveService extends Service {
 
         public void cancel() {
             try {
+                pubnubDisconnect();
+
                 if (RobotSocket!=null)
                     RobotSocket.close();
             } catch (IOException e) {
