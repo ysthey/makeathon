@@ -48,6 +48,7 @@ public class SlaveService extends Service {
     private static final String CMD_L = "CMD_L";
     private static final String CMD_R = "CMD_R";
     private static final String CMD_P = "CMD_P";
+    private static final String CMD_S = "CMD_S";
 
     private static final int ONE_MOVE_PERIOD = 1000;
     private static final int POKE_ONE_WAY_PERIOD = 500;
@@ -206,7 +207,7 @@ public class SlaveService extends Service {
         // move motor B & C backwards
         int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
         int motorCPortIndex = 2;
-        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 90,false);
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED-5, 90,false);
         mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
 
         //mRobotCommanderThread.robotMove(motorCPortIndex, -speed);
@@ -250,6 +251,24 @@ public class SlaveService extends Service {
         mRobotCommanderThread.robotMove(0);
     }
 
+    public void onSlap(){
+        Log.d(TAG, "onSlap");
+
+        // move motor B & C backwards
+        int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorCPortIndex = 2;
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 130,true);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-40, 300, true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED+ 20,130,false);
+
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+40, 300, true);
+        mRobotCommanderThread.robotMove(0);
+
+
+
+    }
     private void threadWait(long time) {
         try {
             Thread.sleep(time);
@@ -300,6 +319,8 @@ public class SlaveService extends Service {
                                 onRight();
                             } else if (CMD_P.equals(msg)){
                                 onPoke();
+                            } else if (CMD_S.equals(msg)){
+                                onSlap();
                             }
                         }
 

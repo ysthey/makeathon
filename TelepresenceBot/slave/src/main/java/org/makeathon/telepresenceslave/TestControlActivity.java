@@ -62,6 +62,13 @@ public class TestControlActivity extends AppCompatActivity {
         }
     }
 
+    public void onSlap(View v){
+        SlaveService service = SlaveService.getInstance();
+        if (service != null){
+            service.onSlap();
+        }
+    }
+
 
 
 }

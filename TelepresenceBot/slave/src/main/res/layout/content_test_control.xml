@@ -37,6 +37,11 @@
         android:layout_height="wrap_content"
         android:onClick="onPoke"
         android:text="poke"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onSlap"
+        android:text="slap"/>
 
 
 

@@ -118,7 +118,7 @@ public class ControllerActivity extends AppCompatActivity {
                         right(null);
                     }
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(800);
                     } catch (InterruptedException e) {
                         break;
                     }
