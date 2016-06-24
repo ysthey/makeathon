@@ -199,13 +199,37 @@ public class SlaveService extends Service {
     }
 
     public void onSlap(){
-        Log.d(TAG, "onPoke");
+        Log.d(TAG, "onSlap");
 
         // move motor B & C backwards
         int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
         int motorCPortIndex = 2;
         mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 180,true);
         mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED, 180,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
+
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 300, true);
+
+
+
+    }
+
+
+    public void onTripleSlap(){
+        Log.d(TAG, "onPTripleSlap");
+
+        // move motor B & C backwards
+        int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorCPortIndex = 2;
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 180,true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED, 180,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED, 180,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED-50, 300, true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 180,false);
         mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
 
         mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 300, true);
@@ -243,6 +267,31 @@ public class SlaveService extends Service {
         // stop motor B & C
         //mRobotCommanderThread.robotMove(motorBPortIndex,0);
         //mRobotCommanderThread.robotMove(motorCPortIndex,0);
+
+
+    }
+
+    public void onTriplePoke(){
+        Log.d(TAG, "onTriplePoke");
+
+        // move motor B & C backwards
+        int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
+        int motorCPortIndex = 2;
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 90,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED,15,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 75, true);
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 15,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 75, true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED,15,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 75, true);
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 15,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 75, true);
+
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED,90,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 300, true);
 
 
     }

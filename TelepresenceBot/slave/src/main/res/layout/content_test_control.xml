@@ -42,6 +42,16 @@
         android:layout_height="wrap_content"
         android:onClick="onSlap"
         android:text="slap"/>
+    <Button
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:onClick="onTripleSlap"
+    android:text="tripleslap"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onTriplePoke"
+        android:text="triplepoke"/>
 
 
 
