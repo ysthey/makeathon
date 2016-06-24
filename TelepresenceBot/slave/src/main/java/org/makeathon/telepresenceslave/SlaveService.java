@@ -50,7 +50,7 @@ public class SlaveService extends Service {
     private static final String CMD_P = "CMD_P";
 
     private static final int ONE_MOVE_PERIOD = 1000;
-    private static final int POKE_ONE_WAY_PERIOD = 1500;
+    private static final int POKE_ONE_WAY_PERIOD = 500;
 
     private static final int MSG_ROBOT_TYPE_DETECTED = 3;
     private static final int MSG_ROBOT_CONNECTION = 6;
@@ -64,7 +64,9 @@ public class SlaveService extends Service {
     private static final int MOVING_RIGHT =13;
 
     private static String sRobotAddress;
-    private int speed = 50;
+    private final int speed = 50;
+    private final int POKE_SPEED = 5;
+
 
     private BluetoothSocket RobotSocket;
 
@@ -178,24 +180,31 @@ public class SlaveService extends Service {
         // move motor B & C backwards
         int motorBPortIndex = 1; // port num obtained from #activity_remotecontroller.xml view tag
         int motorCPortIndex = 2;
-        mRobotCommanderThread.robotMove(motorBPortIndex, -speed);
-        mRobotCommanderThread.robotMove(motorCPortIndex, -speed);
+        mRobotCommanderThread.robotMove(motorBPortIndex, -POKE_SPEED, 90,false);
+        mRobotCommanderThread.robotMove(motorCPortIndex, -POKE_SPEED-50, 300, true);
 
-        threadWait(POKE_ONE_WAY_PERIOD);
+        //mRobotCommanderThread.robotMove(motorCPortIndex, -speed);
+
+        //threadWait(POKE_ONE_WAY_PERIOD);
 
         // stop motor B & C
-        mRobotCommanderThread.robotMove(motorBPortIndex,0);
-        mRobotCommanderThread.robotMove(motorCPortIndex,0);
+        //mRobotCommanderThread.robotMove(motorBPortIndex,0);
+        //mRobotCommanderThread.robotMove(motorCPortIndex,0);
 
         // move motor B & C forward
-        mRobotCommanderThread.robotMove(motorBPortIndex, speed);
-        mRobotCommanderThread.robotMove(motorCPortIndex, speed);
+        mRobotCommanderThread.robotMove(motorBPortIndex, POKE_SPEED,90,false);
 
-        threadWait(POKE_ONE_WAY_PERIOD);
+        mRobotCommanderThread.robotMove(motorCPortIndex, POKE_SPEED+50, 300, true);
+
+        //mRobotCommanderThread.robotMove(motorCPortIndex, speed);
+
+        //threadWait(POKE_ONE_WAY_PERIOD);
 
         // stop motor B & C
-        mRobotCommanderThread.robotMove(motorBPortIndex,0);
-        mRobotCommanderThread.robotMove(motorCPortIndex,0);
+        //mRobotCommanderThread.robotMove(motorBPortIndex,0);
+        //mRobotCommanderThread.robotMove(motorCPortIndex,0);
+
+
     }
 
     private void onRight(){
@@ -500,6 +509,20 @@ public class SlaveService extends Service {
             if (mRobotCommander!=null) {
 
                 mRobotCommander.doRobotMove(portIndex, speed, 0, false);
+            }
+        }
+
+        public void robotMove(int portIndex, int speed, int degree) {
+            if (mRobotCommander!=null) {
+
+                mRobotCommander.doRobotMove(portIndex, speed,degree, false);
+            }
+        }
+
+        public void robotMove(int portIndex, int speed, int degree, boolean block) {
+            if (mRobotCommander!=null) {
+
+                mRobotCommander.doRobotMove(portIndex, speed,degree, block);
             }
         }
 

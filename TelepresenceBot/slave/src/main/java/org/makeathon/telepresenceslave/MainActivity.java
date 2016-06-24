@@ -28,6 +28,9 @@ import org.makeathon.telepresenceslave.roboliterate.activities.ConfigureDeviceAc
 import org.makeathon.telepresenceslave.roboliterate.robotcomms.Robot;
 import org.makeathon.telepresenceslave.roboliterate.views.SpeedSlider;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import events.CancelBluetoothDiscovery;
 import events.ConnectionFailed;
 import events.DismissConnectionDialog;
@@ -54,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean mIsPortsConfigured;
 
+
+
     @Override
     public void onResume(){
         super.onResume();
@@ -75,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         notificationManager.notify(0, n);
+
     }
 
     @Override

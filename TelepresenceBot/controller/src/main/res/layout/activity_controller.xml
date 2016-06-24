@@ -19,24 +19,28 @@
 
 
         <Button
+            android:id="@+id/btn_left"
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
-            android:onClick="left"
 
             android:text="&lt;"/>
         <Button
+            android:id="@+id/btn_forward"
+
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
-            android:onClick="forward"
 
             android:text="^"/>
         <Button
+            android:id="@+id/btn_right"
+
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
-            android:onClick="right"
 
             android:text="&gt;"/>
         <Button
+            android:id="@+id/btn_poke"
+
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
             android:onClick="poke"
@@ -50,20 +54,25 @@
         android:layout_above="@id/bottom_control">
 
         <Button
+            android:id="@+id/btn_connect"
+
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
             android:onClick="connect"
             android:text="CN"/>
         <Button
+            android:id="@+id/btn_disconnect"
+
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
             android:onClick="disconnect"
 
             android:text="DC"/>
         <Button
+            android:id="@+id/btn_backward"
+
             android:layout_width="@dimen/buttonsize"
             android:layout_height="@dimen/buttonsize"
-            android:onClick="backward"
 
             android:text="V"/>
 

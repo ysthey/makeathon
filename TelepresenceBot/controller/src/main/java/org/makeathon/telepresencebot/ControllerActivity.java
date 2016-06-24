@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -20,6 +21,9 @@ import com.pubnub.api.Pubnub;
 import com.pubnub.api.PubnubError;
 import com.pubnub.api.PubnubException;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class ControllerActivity extends AppCompatActivity {
     private Pubnub pubnub;
     private int counter = 0;
@@ -28,6 +32,14 @@ public class ControllerActivity extends AppCompatActivity {
     private static final String CMD_L = "CMD_L";
     private static final String CMD_R = "CMD_R";
     private static final String CMD_P = "CMD_P";
+    private final ExecutorService mThreadExecutor = Executors.newSingleThreadExecutor();
+    private Button mForwardButton;
+    private Button mBackwardButton;
+
+    private Button mLeftButton;
+
+    private Button mRightButton;
+
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -43,6 +55,13 @@ public class ControllerActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_controller);
+        mForwardButton = (Button) findViewById(R.id.btn_forward);
+        mBackwardButton = (Button) findViewById(R.id.btn_backward);
+
+        mLeftButton = (Button) findViewById(R.id.btn_left);
+
+        mRightButton = (Button) findViewById(R.id.btn_right);
+
         pubnub = new Pubnub("pub-c-e0e0e558-9aa1-412e-a4ca-ce286e939e54", "sub-c-4b5e362c-27fd-11e6-84f2-02ee2ddab7fe");
         // prepare intent which is triggered if the
 // notification is selected
@@ -50,8 +69,14 @@ public class ControllerActivity extends AppCompatActivity {
 
 
     }
-
     @Override
+    public void onPause(){
+        if (mThreadExecutor!= null){
+            mThreadExecutor.shutdownNow();
+        }
+        super.onPause();
+
+    }
     public void onResume(){
         super.onResume();
         Intent intent = new Intent(this, ControllerActivity.class);
@@ -72,13 +97,41 @@ public class ControllerActivity extends AppCompatActivity {
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         notificationManager.notify(0, n);
+        mThreadExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                while(true&& !Thread.interrupted()){
+                    if (mForwardButton.isPressed()){
+                        System.out.println("forward");
+                        forward(null);
+                    }
+                    if (mBackwardButton.isPressed()){
+                        System.out.println("backward");
+                        backward(null);
+                    }
+                    if (mLeftButton.isPressed()){
+                        System.out.println("left");
+                        left(null);
+                    }
+                    if (mRightButton.isPressed()){
+                        System.out.println("right");
+                        right(null);
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+
+                }
+            }
+        });
     }
 
 
 
     public void forward(View view) {
-        pubnub.publish("my_channel", CMD_F, new Callback() {
-        });
+        pubnub.publish("my_channel", CMD_F, new Callback() {});
     }
 
     public void backward(View view) {
